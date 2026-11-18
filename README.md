@@ -16,11 +16,11 @@ Latest APK: see **Releases** on the right of this page.
 `data/`  Entities, DAOs, Database, and Repository (data layer)
 
 ## Team
-| Stage | Member | Admission No. | Pull request |
-|---|---|---|---|
-| 1 Lead | [Your Name] | [Admission No.] | (link) |
-| 2 ViewModel | [Member Name] | [Admission No.] | (link) |
-| 3 Room | [Member Name] | [Admission No.] | (link) |
-| 4 Screens | [Member Name] | [Admission No.] | (link) |
-| 5 Data integration | [Member Name] | [Admission No.] | (link) |
-| 6 Release | [Your Name] | [Admission No.] | (link) |
+| Stage | Member                 | Admission No. | Pull request |
+|---|------------------------|---------------|---|
+| 1 Lead | Bhamra, Aman Singh     | 165553        | (link) |
+| 2 ViewModel | Odhiambo, Moses Bill   | 192092        | (link) |
+| 3 Room | Somo, Ruweidha Mohamed | 189240        | (link) |
+| 4 Screens | Wambua, Lee Mutua      | 193772        | (link) |
+| 5 Data integration | Grace, Alia Baba       | 177571        | (link) |
+| 6 Release | Bhamra, Aman Singh     | 165553        | (link) |
