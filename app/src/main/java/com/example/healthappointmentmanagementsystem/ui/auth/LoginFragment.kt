@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.healthappointmentmanagementsystem.R
+import com.google.android.material.button.MaterialButtonToggleGroup
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
@@ -20,9 +21,21 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         val email = view.findViewById<EditText>(R.id.editEmail)
         val password = view.findViewById<EditText>(R.id.editPassword)
         val error = view.findViewById<TextView>(R.id.textError)
+        val toggle = view.findViewById<MaterialButtonToggleGroup>(R.id.toggleRole)
+
+        toggle.check(R.id.btnRolePatient)
 
         view.findViewById<Button>(R.id.btnLogin).setOnClickListener {
-            authViewModel.login(email.text.toString().trim(), password.text.toString())
+            val selectedRole = when (toggle.checkedButtonId) {
+                R.id.btnRoleDoctor -> "Doctor"
+                R.id.btnRoleAdmin -> "Admin"
+                else -> "Patient"
+            }
+            authViewModel.login(
+                email.text.toString().trim(),
+                password.text.toString(),
+                selectedRole
+            )
         }
 
         view.findViewById<TextView>(R.id.textGoRegister).setOnClickListener {
@@ -39,7 +52,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
         authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                // Routing by role is added to MainActivity in the next step.
+                // Routing by role is handled in MainActivity.
                 Toast.makeText(requireContext(), "Welcome ${user.name}", Toast.LENGTH_SHORT).show()
             }
         }

@@ -1,47 +1,76 @@
 package com.example.healthappointmentmanagementsystem.ui
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import com.example.healthappointmentmanagementsystem.data.Appointment
+import com.example.healthappointmentmanagementsystem.data.database.AppDatabase
+import kotlinx.coroutines.launch
+import com.example.healthappointmentmanagementsystem.data.entities.Appointment as AppointmentEntity
 
-class AppointmentViewModel : ViewModel() {
+class AppointmentViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _appointments = MutableLiveData<List<Appointment>>()
-    val appointments: LiveData<List<Appointment>> get() = _appointments
+    private val dao = AppDatabase.getDatabase(application).appointmentDao()
 
-    val totalAppointmentCount: LiveData<Int> = _appointments.map { list ->
+    val appointments: LiveData<List<Appointment>> =
+        dao.observeAll().map { list -> list.map { it.toModel() } }
+
+    val totalAppointmentCount: LiveData<Int> = appointments.map { list ->
         list.size
     }
 
-    val confirmedCount: LiveData<Int> = _appointments.map { list ->
+    val confirmedCount: LiveData<Int> = appointments.map { list ->
         list.count { it.status.equals("Confirmed", ignoreCase = true) }
     }
 
-    val formattedAppointmentList: LiveData<List<String>> = _appointments.map { list ->
+    val formattedAppointmentList: LiveData<List<String>> = appointments.map { list ->
         list.map { appointment ->
             " ${appointment.date} at ${appointment.time} | Dr. ${appointment.doctorName} - Patient: ${appointment.patientName} [${appointment.status}]"
         }
     }
 
-    init {
-        loadSampleAppointments()
+    // onDone receives an error message, or null when the appointment was saved.
+    fun addAppointment(appointment: Appointment, onDone: (String?) -> Unit = {}) {
+        viewModelScope.launch {
+            val taken = dao.countTaken(
+                appointment.doctorName,
+                appointment.date,
+                appointment.time
+            )
+            if (taken > 0) {
+                onDone("That doctor is already booked at this time. Choose another slot.")
+                return@launch
+            }
+            dao.insertAppointment(appointment.toEntity())
+            onDone(null)
+        }
     }
 
-    fun loadSampleAppointments() {
-        val sampleData = listOf(
-            Appointment("1", "Aman", "Lee", "2025-03-30", "10:00 AM", "Confirmed"),
-            Appointment("2", "Moses Bill", "Somo", "2025-03-30", "11:30 AM", "Pending"),
-            Appointment("3", "Alia Baba", "John", "2025-03-31", "02:00 PM", "Confirmed"),
-            Appointment("4", "Gift Shasa", "Sarah", "2025-04-01", "09:15 AM", "Cancelled")
-        )
-        _appointments.value = sampleData
+    fun cancelAppointment(id: String) {
+        viewModelScope.launch { dao.updateStatus(id, "Cancelled") }
     }
 
-    fun addAppointment(appointment: Appointment) {
-        val currentList = _appointments.value.orEmpty().toMutableList()
-        currentList.add(appointment)
-        _appointments.value = currentList
+    fun deleteAppointment(id: String) {
+        viewModelScope.launch { dao.deleteById(id) }
     }
+
+    private fun AppointmentEntity.toModel() = Appointment(
+        id = id,
+        patientName = patientName,
+        doctorName = doctorName,
+        date = date,
+        time = time,
+        status = status
+    )
+
+    private fun Appointment.toEntity() = AppointmentEntity(
+        id = id,
+        patientName = patientName,
+        doctorName = doctorName,
+        date = date,
+        time = time,
+        status = status
+    )
 }

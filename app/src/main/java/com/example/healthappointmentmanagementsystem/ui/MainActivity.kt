@@ -6,10 +6,15 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.example.healthappointmentmanagementsystem.R
-import com.example.healthappointmentmanagementsystem.ui.appointments.AppointmentListFragment
+import com.example.healthappointmentmanagementsystem.ui.admin.AdminHomeFragment
 import com.example.healthappointmentmanagementsystem.ui.auth.AuthViewModel
 import com.example.healthappointmentmanagementsystem.ui.auth.LoginFragment
+import com.example.healthappointmentmanagementsystem.ui.auth.RegisterFragment
+import com.example.healthappointmentmanagementsystem.ui.doctor.DoctorHomeFragment
+import com.example.healthappointmentmanagementsystem.ui.patient.PatientHomeFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,12 +38,31 @@ class MainActivity : AppCompatActivity() {
         }
 
         authViewModel.currentUser.observe(this) { user ->
-            val current = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
-            if (user != null && current !is AppointmentListFragment) {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, AppointmentListFragment())
-                    .commit()
+            val current: Fragment? = supportFragmentManager.findFragmentById(R.id.fragmentContainer)
+
+            if (user == null) {
+                if (current !is LoginFragment && current !is RegisterFragment) {
+                    showScreen(LoginFragment())
+                }
+            } else {
+                val target: Fragment = when (user.role.uppercase()) {
+                    "ADMIN" -> AdminHomeFragment()
+                    "DOCTOR" -> DoctorHomeFragment()
+                    else -> PatientHomeFragment()
+                }
+                if (current?.javaClass != target.javaClass) {
+                    showScreen(target)
+                }
             }
         }
+    }
+
+    private fun showScreen(fragment: Fragment) {
+        // Clear the back stack so Back can't return to a previous user's screen
+        // or to the Register screen after logging in.
+        supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, fragment)
+            .commit()
     }
 }
