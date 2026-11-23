@@ -2,6 +2,20 @@
 
 An Android app for patients to book appointments with doctors, view consultation schedules, and manage medical records.
 
+## Problem Statement
+Traditional healthcare appointment systems (manual phone calls, physical booking desks, and paper-based record-keeping) suffer from significant inefficiencies:
+- **Scheduling Inefficiencies:** Patients often experience double-bookings, missed appointments, and long waiting times due to poor scheduling visibility.
+- **Lack of Accessibility:** Patients struggle to easily find doctors by specialty or check availability outside of clinic working hours.
+- **Disorganized Records:** Paper prescriptions and manual medical histories are easily lost or hard for patients to track across visits.
+- **Administrative Burden:** Clinics face heavy administrative workloads, leading to human error and inefficient appointment workflows.
+
+## Proposed Solution
+Our mobile application provides a centralized digital **Health Appointment Management System** designed to streamline the entire healthcare booking lifecycle:
+- **Digital Booking:** Patients can browse doctors by specialty, check availability, and book consultations instantly.
+- **Appointment Management:** Real-time tracking of upcoming, completed, and cancelled appointments.
+- **Secure Persistence:** Reliable data storage using Android Room database and LiveData for real-time UI updates.
+- **Organized Records:** Easy access to medical history and consultation details.
+
 ## Download
 Latest APK: see **Releases** on the right of this page.
 
