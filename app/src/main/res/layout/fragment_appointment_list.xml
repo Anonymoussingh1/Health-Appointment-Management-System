@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#E3F2FD">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerAppointments"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingStart="8dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="88dp" />
 
     <TextView
         android:id="@+id/textEmpty"
@@ -14,6 +20,15 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="No appointments yet"
+        android:textColor="#37474F"
         android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="16dp"
+        android:text="Log out" />
 
 </FrameLayout>
