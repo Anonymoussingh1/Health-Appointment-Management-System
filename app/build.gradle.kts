@@ -51,6 +51,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
 
     // Room
     implementation("androidx.room:room-runtime:2.7.2")
