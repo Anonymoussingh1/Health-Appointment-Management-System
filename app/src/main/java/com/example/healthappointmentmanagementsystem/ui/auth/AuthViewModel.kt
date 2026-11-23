@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.healthappointmentmanagementsystem.data.UserDirectory
-import com.example.healthappointmentmanagementsystem.data.database.AppDatabase
+import com.example.healthappointmentmanagementsystem.data.dao.UserDao
 import com.example.healthappointmentmanagementsystem.data.entities.User
 import com.example.healthappointmentmanagementsystem.util.PasswordHasher
 import kotlinx.coroutines.launch
@@ -19,7 +19,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         const val DEFAULT_ADMIN_PASSWORD = "Admin@123"
     }
 
-    private val userDao = AppDatabase.getDatabase(application).userDao()
+    private val userDao = UserDao(application)
 
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> get() = _currentUser
@@ -46,7 +46,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun register(name: String, email: String, password: String, role: String) {
+    fun register(name: String, email: String, password: String, role: String, hospital: String? = null, specialty: String? = null) {
         viewModelScope.launch {
             // Nobody can sign up as an admin or take the admin email.
             if (role.equals("ADMIN", ignoreCase = true) ||
@@ -63,7 +63,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 name = name,
                 email = email,
                 passwordHash = PasswordHasher.hash(password),
-                role = role
+                role = role,
+                hospital = hospital,
+                specialty = specialty
             )
             val id = userDao.insert(user)
             _currentUser.postValue(user.copy(userId = id.toInt()))

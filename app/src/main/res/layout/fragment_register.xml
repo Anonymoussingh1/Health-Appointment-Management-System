@@ -105,6 +105,41 @@
                     android:text="Doctor" />
             </RadioGroup>
 
+            <!-- Doctor Specific Fields (Hospital & Specialty) -->
+            <LinearLayout
+                android:id="@+id/layoutDoctorFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Hospital / Clinic Name">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editHospital"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Profession / Specialty (e.g. Back Doctor, Eye)">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editSpecialty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/textError"
                 android:layout_width="match_parent"
@@ -122,5 +157,17 @@
                 android:textAllCaps="false"
                 android:textSize="16sp" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/textGoLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:text="Already have an account? Log in"
+            android:textColor="#1565C0"
+            android:textSize="15sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>

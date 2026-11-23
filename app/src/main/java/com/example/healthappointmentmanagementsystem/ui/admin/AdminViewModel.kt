@@ -6,14 +6,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.healthappointmentmanagementsystem.data.UserDirectory
-import com.example.healthappointmentmanagementsystem.data.database.AppDatabase
+import com.example.healthappointmentmanagementsystem.data.dao.UserDao
 import com.example.healthappointmentmanagementsystem.data.entities.User
 import com.example.healthappointmentmanagementsystem.util.PasswordHasher
 import kotlinx.coroutines.launch
 
 class AdminViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val userDao = AppDatabase.getDatabase(application).userDao()
+    private val userDao = UserDao(application)
 
     private val _doctors = MutableLiveData<List<UserDirectory.Person>>(emptyList())
     val doctors: LiveData<List<UserDirectory.Person>> get() = _doctors

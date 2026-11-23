@@ -22,7 +22,6 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
     private val viewModel: AppointmentViewModel by viewModels()
     private val authViewModel: AuthViewModel by activityViewModels()
 
-    // The doctor's current appointments, used by the picker dialog.
     private var mineCache: List<String> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -33,7 +32,33 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
 
         view.findViewById<TextView>(R.id.textWelcome).text = "Dr. $name"
         view.findViewById<TextView>(R.id.textProfile).text =
-            "Name: $name\nEmail: ${user?.email ?: "-"}\nRole: Doctor"
+            "Name: Dr. $name\nEmail: ${user?.email ?: "-"}\nRole: Doctor${if (!user?.specialty.isNullOrEmpty()) "\nSpecialty: ${user?.specialty}" else ""}${if (!user?.hospital.isNullOrEmpty()) "\nHospital: ${user?.hospital}" else ""}"
+
+        // Doctor Professional Tool Buttons
+        view.findViewById<Button>(R.id.btnSchedule).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, DoctorScheduleFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnWaitingRoom).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, WaitingRoomFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnPatientHistory).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, PatientHistoryFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnPrescriptions).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, DoctorPrescriptionsFragment())
+                .addToBackStack(null)
+                .commit()
+        }
 
         val recycler = view.findViewById<RecyclerView>(R.id.recyclerAppointments)
         val empty = view.findViewById<TextView>(R.id.textEmpty)
@@ -46,8 +71,6 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
         }
         recycler.adapter = adapter
 
-        // TEMPORARY: matches the doctor's name against "Dr. <name>" in each appointment
-        // until appointments store a doctorId.
         val key = "dr. ${name.trim().lowercase()}"
 
         viewModel.formattedAppointmentList.observe(viewLifecycleOwner) { all ->
@@ -59,7 +82,7 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
 
             val confirmed = mine.count { it.contains("[Confirmed]") }
             val pending = mine.count { it.contains("[Pending]") }
-            summary.text = "Total: ${mine.size}  ·  Confirmed: $confirmed  ·  Pending: $pending"
+            summary.text = "Total Appointments: ${mine.size}  ·  Confirmed: $confirmed  ·  Pending: $pending"
         }
 
         view.findViewById<Button>(R.id.btnWriteConsultation).setOnClickListener {

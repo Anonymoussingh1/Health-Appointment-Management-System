@@ -23,11 +23,11 @@ class PatientHomeFragment : Fragment(R.layout.fragment_patient_home) {
         super.onViewCreated(view, savedInstanceState)
 
         val user = authViewModel.currentUser.value
-        val name = user?.name ?: "there"
+        val name = user?.name ?: "Patient"
 
         view.findViewById<TextView>(R.id.textWelcome).text = "Hello, $name"
         view.findViewById<TextView>(R.id.textProfile).text =
-            "Name: $name\nEmail: ${user?.email ?: "-"}\nRole: Patient"
+            "Logged in as: $name\nEmail: ${user?.email ?: "-"}\nRole: Patient"
 
         view.findViewById<Button>(R.id.btnBook).setOnClickListener {
             parentFragmentManager.beginTransaction()
@@ -36,22 +36,80 @@ class PatientHomeFragment : Fragment(R.layout.fragment_patient_home) {
                 .commit()
         }
 
-        // Empty states until prescriptions and consultations exist.
-        val meds = emptyList<String>()
-        val seenDoctors = emptyList<String>()
+        // Patient Quick Action Services (Opening dedicated pages/forms)
+        view.findViewById<Button>(R.id.btnIntake).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, IntakeFormFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnPrescriptions).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, PrescriptionsFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnBilling).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, BillingFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnMessages).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, MessagesFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnDependents).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, FamilyProfilesFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+        view.findViewById<Button>(R.id.btnInsurance).setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, InsuranceInfoFragment())
+                .addToBackStack(null)
+                .commit()
+        }
 
-        setupList(view.findViewById(R.id.recyclerMeds), meds, view.findViewById(R.id.textNoMeds))
-        setupList(view.findViewById(R.id.recyclerDoctorsSeen), seenDoctors, view.findViewById(R.id.textNoDoctors))
-
-        // Show only this patient's appointments.
-        // TEMPORARY: matches on the patient's name until Appointment has a patientId.
+        // Show only this patient's appointments with structured card bindings.
         val apptRecycler = view.findViewById<RecyclerView>(R.id.recyclerAppointments)
         val apptEmpty = view.findViewById<TextView>(R.id.textEmpty)
         val summary = view.findViewById<TextView>(R.id.textSummary)
 
         apptRecycler.layoutManager = LinearLayoutManager(requireContext())
         val apptAdapter = SimpleListAdapter<String>(R.layout.item_appointment) { row, text ->
-            row.findViewById<TextView>(R.id.textTitle).text = text
+            val dateView = row.findViewById<TextView>(R.id.textDate)
+            val docView = row.findViewById<TextView>(R.id.textDoctor)
+            val patientView = row.findViewById<TextView>(R.id.textPatient)
+            val statusView = row.findViewById<TextView>(R.id.textStatus)
+
+            try {
+                if (text.contains("|")) {
+                    dateView.text = text.substringBefore("|").trim()
+                    val rest = text.substringAfter("|").trim()
+                    docView.text = rest.substringBefore("-").trim()
+                    patientView.text = rest.substringAfter("-").trim()
+                } else {
+                    dateView.text = text
+                    docView.text = ""
+                    patientView.text = ""
+                }
+            } catch (e: Exception) {
+                dateView.text = text
+            }
+
+            if (text.contains("[Confirmed]", ignoreCase = true)) {
+                statusView.text = "CONFIRMED"
+            } else if (text.contains("[Pending]", ignoreCase = true)) {
+                statusView.text = "PENDING"
+            } else if (text.contains("[Cancelled]", ignoreCase = true)) {
+                statusView.text = "CANCELLED"
+            } else {
+                statusView.text = "SCHEDULED"
+            }
         }
         apptRecycler.adapter = apptAdapter
 
@@ -62,25 +120,14 @@ class PatientHomeFragment : Fragment(R.layout.fragment_patient_home) {
             apptAdapter.submit(mine)
             apptEmpty.visibility = if (mine.isEmpty()) View.VISIBLE else View.GONE
 
-            val confirmed = mine.count { it.contains("[Confirmed]") }
-            val pending = mine.count { it.contains("[Pending]") }
-            val cancelled = mine.count { it.contains("[Cancelled]") }
-            summary.text = "Upcoming: ${mine.size}  ·  Confirmed: $confirmed  ·  " +
-                    "Pending: $pending  ·  Cancelled: $cancelled"
+            val confirmed = mine.count { it.contains("[Confirmed]", ignoreCase = true) }
+            val pending = mine.count { it.contains("[Pending]", ignoreCase = true) }
+            val cancelled = mine.count { it.contains("[Cancelled]", ignoreCase = true) }
+            summary.text = "Appointments — Total: ${mine.size}  ·  Confirmed: $confirmed  ·  Pending: $pending  ·  Cancelled: $cancelled"
         }
 
         view.findViewById<Button>(R.id.btnLogout).setOnClickListener {
             authViewModel.logout()
         }
-    }
-
-    private fun setupList(recycler: RecyclerView, items: List<String>, emptyView: TextView) {
-        recycler.layoutManager = LinearLayoutManager(requireContext())
-        val adapter = SimpleListAdapter<String>(R.layout.item_simple_row) { row, text ->
-            row.findViewById<TextView>(R.id.textTitle).text = text
-        }
-        recycler.adapter = adapter
-        adapter.submit(items)
-        emptyView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
     }
 }

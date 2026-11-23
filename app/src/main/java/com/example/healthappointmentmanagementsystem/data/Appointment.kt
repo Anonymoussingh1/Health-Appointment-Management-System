@@ -6,5 +6,6 @@ data class Appointment(
     val doctorName: String,
     val date: String,
     val time: String,
-    val status: String // e.g., "Confirmed", "Pending", "Cancelled"
+    val status: String, // e.g., "Confirmed", "Pending", "Cancelled"
+    val reason: String? = null
 )

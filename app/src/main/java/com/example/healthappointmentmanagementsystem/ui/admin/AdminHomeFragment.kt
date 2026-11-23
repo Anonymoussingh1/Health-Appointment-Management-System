@@ -61,6 +61,10 @@ class AdminHomeFragment : Fragment(R.layout.fragment_admin_home) {
             showAddDialog("PATIENT")
         }
 
+        view.findViewById<Button>(R.id.btnLogout).setOnClickListener {
+            authViewModel.logout()
+        }
+
         view.findViewById<TextInputEditText>(R.id.inputSearch).doAfterTextChanged {
             query = it?.toString().orEmpty().trim().lowercase()
             render()

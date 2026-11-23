@@ -21,7 +21,8 @@ class AppointmentViewModel : ViewModel() {
 
     val formattedAppointmentList: LiveData<List<String>> = _appointments.map { list ->
         list.map { appointment ->
-            " ${appointment.date} at ${appointment.time} | Dr. ${appointment.doctorName} - Patient: ${appointment.patientName} [${appointment.status}]"
+            val reasonText = if (!appointment.reason.isNullOrEmpty()) " | Issue: ${appointment.reason}" else ""
+            "${appointment.date} at ${appointment.time} | Dr. ${appointment.doctorName} - Patient: ${appointment.patientName}$reasonText [${appointment.status}]"
         }
     }
 
@@ -31,10 +32,10 @@ class AppointmentViewModel : ViewModel() {
 
     fun loadSampleAppointments() {
         val sampleData = listOf(
-            Appointment("1", "Aman", "Lee", "2025-03-30", "10:00 AM", "Confirmed"),
-            Appointment("2", "Moses Bill", "Somo", "2025-03-30", "11:30 AM", "Pending"),
-            Appointment("3", "Alia Baba", "John", "2025-03-31", "02:00 PM", "Confirmed"),
-            Appointment("4", "Gift Shasa", "Sarah", "2025-04-01", "09:15 AM", "Cancelled")
+            Appointment("1", "Aman", "Lee", "2025-03-30", "10:00 AM", "Confirmed", "Back pain & stiffness"),
+            Appointment("2", "Moses Bill", "Somo", "2025-03-30", "11:30 AM", "Pending", "Blurred vision"),
+            Appointment("3", "Alia Baba", "John", "2025-03-31", "02:00 PM", "Confirmed", "Annual checkup"),
+            Appointment("4", "Gift Shasa", "Sarah", "2025-04-01", "09:15 AM", "Cancelled", "Migraine")
         )
         _appointments.value = sampleData
     }
@@ -42,6 +43,23 @@ class AppointmentViewModel : ViewModel() {
     fun addAppointment(appointment: Appointment) {
         val currentList = _appointments.value.orEmpty().toMutableList()
         currentList.add(appointment)
+        _appointments.value = currentList
+    }
+
+    fun addAppointment(appointment: Appointment, onResult: (String?) -> Unit) {
+        addAppointment(appointment)
+        onResult(null)
+    }
+
+    fun cancelAppointment(id: String) {
+        val currentList = _appointments.value.orEmpty().map {
+            if (it.id == id) it.copy(status = "Cancelled") else it
+        }
+        _appointments.value = currentList
+    }
+
+    fun deleteAppointment(id: String) {
+        val currentList = _appointments.value.orEmpty().filter { it.id != id }
         _appointments.value = currentList
     }
 }

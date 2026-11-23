@@ -1,5 +1,6 @@
 package com.example.healthappointmentmanagementsystem.ui.auth
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -25,6 +26,21 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
         toggle.check(R.id.btnRolePatient)
 
+        toggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                error.visibility = View.GONE
+                if (checkedId == R.id.btnRoleAdmin) {
+                    email.setText(AuthViewModel.DEFAULT_ADMIN_EMAIL)
+                    password.setText(AuthViewModel.DEFAULT_ADMIN_PASSWORD)
+                } else {
+                    if (email.text.toString() == AuthViewModel.DEFAULT_ADMIN_EMAIL) {
+                        email.setText("")
+                        password.setText("")
+                    }
+                }
+            }
+        }
+
         view.findViewById<Button>(R.id.btnLogin).setOnClickListener {
             val selectedRole = when (toggle.checkedButtonId) {
                 R.id.btnRoleDoctor -> "Doctor"
@@ -36,6 +52,27 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 password.text.toString(),
                 selectedRole
             )
+        }
+
+        view.findViewById<TextView>(R.id.textForgotPassword).setOnClickListener {
+            val input = EditText(requireContext())
+            input.hint = "Enter your account email"
+            input.setPadding(40, 30, 40, 30)
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Reset Password")
+                .setMessage("Enter your email address and we will send you a password reset link.")
+                .setView(input)
+                .setPositiveButton("Send Link") { _, _ ->
+                    val mail = input.text.toString().trim()
+                    if (mail.isNotEmpty()) {
+                        Toast.makeText(requireContext(), "Password reset link sent to $mail", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Please enter a valid email", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
 
         view.findViewById<TextView>(R.id.textGoRegister).setOnClickListener {
@@ -52,7 +89,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
         authViewModel.currentUser.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                // Routing by role is handled in MainActivity.
                 Toast.makeText(requireContext(), "Welcome ${user.name}", Toast.LENGTH_SHORT).show()
             }
         }

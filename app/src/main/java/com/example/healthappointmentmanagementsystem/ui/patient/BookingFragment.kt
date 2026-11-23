@@ -49,17 +49,21 @@ class BookingFragment : Fragment(R.layout.fragment_booking) {
             ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, timeSlots)
         )
 
-        // Load the registered doctors from the database.
+        // Load the registered doctors and their specialties from the database cleanly.
         viewLifecycleOwner.lifecycleScope.launch {
             val doctors = UserDirectory.byRole(requireContext(), "DOCTOR")
-            doctorNames = doctors.map { "Dr. ${it.name}" }
+            doctorNames = doctors.map { doc ->
+                val cleanName = doc.name.substringBefore("@").trim()
+                val spec = if (!doc.specialty.isNullOrEmpty()) " (${doc.specialty})" else ""
+                "Dr. $cleanName$spec"
+            }
             doctorInput.setAdapter(
                 ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, doctorNames)
             )
             doctorInput.threshold = 0
             doctorHint.text =
                 if (doctorNames.isEmpty()) "No doctors are registered yet"
-                else "Type to search or tap to choose a registered doctor"
+                else "Choose a doctor by specialty (e.g. Back Doctor, Eye)"
         }
 
         doctorInput.setOnClickListener { doctorInput.showDropDown() }
@@ -105,13 +109,16 @@ class BookingFragment : Fragment(R.layout.fragment_booking) {
                 return@setOnClickListener
             }
 
+            val cleanDoctorName = chosenDoctor.removePrefix("Dr. ").substringBefore(" (").trim()
+
             val appointment = Appointment(
                 id = UUID.randomUUID().toString(),
                 patientName = patient.name,
-                doctorName = chosenDoctor.removePrefix("Dr. ").trim(),
+                doctorName = cleanDoctorName,
                 date = date,
                 time = time,
-                status = "Pending"
+                status = "Pending",
+                reason = reason
             )
 
             confirm.isEnabled = false
