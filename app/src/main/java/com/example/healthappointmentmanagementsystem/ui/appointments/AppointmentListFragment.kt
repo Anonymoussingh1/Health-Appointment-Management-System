@@ -2,18 +2,22 @@ package com.example.healthappointmentmanagementsystem.ui.appointments
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.healthappointmentmanagementsystem.R
 import com.example.healthappointmentmanagementsystem.ui.AppointmentViewModel
+import com.example.healthappointmentmanagementsystem.ui.auth.AuthViewModel
 import com.example.healthappointmentmanagementsystem.ui.common.SimpleListAdapter
 
 class AppointmentListFragment : Fragment(R.layout.fragment_appointment_list) {
 
     private val viewModel: AppointmentViewModel by viewModels()
+    private val authViewModel: AuthViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -31,6 +35,10 @@ class AppointmentListFragment : Fragment(R.layout.fragment_appointment_list) {
         viewModel.formattedAppointmentList.observe(viewLifecycleOwner) { list ->
             adapter.submit(list)
             empty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        view.findViewById<Button>(R.id.btnLogout).setOnClickListener {
+            authViewModel.logout()
         }
     }
 }
