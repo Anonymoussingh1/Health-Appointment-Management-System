@@ -1,5 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
+
 }
 
 android {
@@ -42,4 +45,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    implementation("androidx.room:room-runtime:2.7.2")
+    implementation("androidx.room:room-ktx:2.7.2")
+    ksp("androidx.room:room-compiler:2.7.2")
+
+
+
 }
