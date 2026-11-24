@@ -1,10 +1,10 @@
 package com.example.healthappointmentmanagementsystem.ui.admin
 
 import android.os.Bundle
-import android.util.Patterns
-import android.view.LayoutInflater
+import android.text.InputType
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -15,7 +15,6 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.healthappointmentmanagementsystem.R
-import com.example.healthappointmentmanagementsystem.data.Appointment
 import com.example.healthappointmentmanagementsystem.data.UserDirectory.Person
 import com.example.healthappointmentmanagementsystem.ui.AppointmentViewModel
 import com.example.healthappointmentmanagementsystem.ui.auth.AuthViewModel
@@ -24,7 +23,7 @@ import com.google.android.material.textfield.TextInputEditText
 
 class AdminHomeFragment : Fragment(R.layout.fragment_admin_home) {
 
-    private val appointmentViewModel: AppointmentViewModel by viewModels()
+    private val appointmentViewModel: AppointmentViewModel by activityViewModels()
     private val adminViewModel: AdminViewModel by viewModels()
     private val authViewModel: AuthViewModel by activityViewModels()
 
@@ -82,149 +81,154 @@ class AdminHomeFragment : Fragment(R.layout.fragment_admin_home) {
         val apptRecycler = view.findViewById<RecyclerView>(R.id.recyclerAppointments)
         val noAppointments = view.findViewById<TextView>(R.id.textNoAppointments)
         apptRecycler.layoutManager = LinearLayoutManager(requireContext())
-        val apptAdapter = SimpleListAdapter<Appointment>(R.layout.item_admin_appointment) { row, a ->
-            row.findViewById<TextView>(R.id.textTitle).text =
-                "${a.date} at ${a.time}\nDr. ${a.doctorName}  ·  Patient: ${a.patientName}\nStatus: ${a.status}"
 
-            val cancel = row.findViewById<View>(R.id.btnCancel)
-            cancel.visibility =
-                if (a.status.equals("Cancelled", ignoreCase = true)) View.GONE else View.VISIBLE
-            cancel.setOnClickListener { confirmCancel(a) }
-            row.findViewById<View>(R.id.btnDelete).setOnClickListener { confirmDelete(a) }
+        val apptAdapter = SimpleListAdapter<String>(R.layout.item_appointment) { row, text ->
+            val dateView = row.findViewById<TextView>(R.id.textDate)
+            val docView = row.findViewById<TextView>(R.id.textDoctor)
+            val patientView = row.findViewById<TextView>(R.id.textPatient)
+            val statusView = row.findViewById<TextView>(R.id.textStatus)
+
+            try {
+                if (text.contains("|")) {
+                    dateView.text = text.substringBefore("|").trim()
+                    val rest = text.substringAfter("|").trim()
+                    docView.text = rest.substringBefore("-").trim()
+                    patientView.text = rest.substringAfter("-").trim()
+                } else {
+                    dateView.text = text
+                    docView.text = ""
+                    patientView.text = ""
+                }
+            } catch (_: Exception) {
+                dateView.text = text
+            }
+
+            if (text.contains("[Confirmed]", ignoreCase = true)) {
+                statusView.text = "CONFIRMED"
+            } else if (text.contains("[Pending]", ignoreCase = true)) {
+                statusView.text = "PENDING"
+            } else if (text.contains("[Cancelled]", ignoreCase = true)) {
+                statusView.text = "CANCELLED"
+            } else {
+                statusView.text = "SCHEDULED"
+            }
+
+            row.setOnClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Manage Appointment")
+                    .setMessage("What would you like to do with this appointment?")
+                    .setPositiveButton("Delete Appointment") { _, _ ->
+                        appointmentViewModel.appointments.value?.firstOrNull { appt ->
+                            text.contains(appt.date) && text.contains(appt.time) && text.contains(appt.patientName)
+                        }?.let { appt ->
+                            appointmentViewModel.deleteAppointment(appt.id)
+                            Toast.makeText(requireContext(), "Appointment deleted successfully", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .setNeutralButton("Cancel Appointment") { _, _ ->
+                        appointmentViewModel.appointments.value?.firstOrNull { appt ->
+                            text.contains(appt.date) && text.contains(appt.time) && text.contains(appt.patientName)
+                        }?.let { appt ->
+                            appointmentViewModel.cancelAppointment(appt.id)
+                            Toast.makeText(requireContext(), "Appointment status changed to Cancelled", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .setNegativeButton("Close", null)
+                    .show()
+            }
         }
         apptRecycler.adapter = apptAdapter
 
-        appointmentViewModel.appointments.observe(viewLifecycleOwner) { all ->
-            apptAdapter.submit(all)
-            noAppointments.visibility = if (all.isEmpty()) View.VISIBLE else View.GONE
-            appointmentCount = all.size
-            render()
-        }
-
-        view.findViewById<Button>(R.id.btnLogout).setOnClickListener {
-            authViewModel.logout()
+        appointmentViewModel.formattedAppointmentList.observe(viewLifecycleOwner) { list ->
+            apptAdapter.submit(list)
+            appointmentCount = list.size
+            noAppointments.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+            renderSummary()
         }
     }
 
-    private fun matches(person: Person) =
-        query.isEmpty() ||
-                person.name.lowercase().contains(query) ||
-                person.email.lowercase().contains(query)
+    private fun renderSummary() {
+        summary.text = "Doctors: ${allDoctors.size}  ·  Patients: ${allPatients.size}  ·  Appointments: $appointmentCount"
+    }
 
     private fun render() {
-        val doctors = allDoctors.filter { matches(it) }
-        val patients = allPatients.filter { matches(it) }
+        val filteredDocs = allDoctors.filter {
+            it.name.lowercase().contains(query) || it.email.lowercase().contains(query)
+        }
+        val filteredPatients = allPatients.filter {
+            it.name.lowercase().contains(query) || it.email.lowercase().contains(query)
+        }
 
-        doctorAdapter.submit(doctors)
-        patientAdapter.submit(patients)
-        noDoctors.visibility = if (doctors.isEmpty()) View.VISIBLE else View.GONE
-        noPatients.visibility = if (patients.isEmpty()) View.VISIBLE else View.GONE
+        doctorAdapter.submit(filteredDocs)
+        patientAdapter.submit(filteredPatients)
 
-        summary.text = "Doctors: ${allDoctors.size}  ·  Patients: ${allPatients.size}  ·  " +
-                "Appointments: $appointmentCount"
+        noDoctors.visibility = if (filteredDocs.isEmpty()) View.VISIBLE else View.GONE
+        noPatients.visibility = if (filteredPatients.isEmpty()) View.VISIBLE else View.GONE
+
+        renderSummary()
+    }
+
+    private fun showAddDialog(role: String) {
+        val layout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
+        val nameInput = TextInputEditText(requireContext()).apply { hint = "Full Name" }
+        val emailInput = TextInputEditText(requireContext()).apply { hint = "Email Address"; inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS }
+        val passInput = TextInputEditText(requireContext()).apply { hint = "Password"; inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        layout.addView(nameInput)
+        layout.addView(emailInput)
+        layout.addView(passInput)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Add new $role")
+            .setView(layout)
+            .setPositiveButton("Add") { _, _ ->
+                val name = nameInput.text.toString().trim()
+                val email = emailInput.text.toString().trim()
+                val pass = passInput.text.toString()
+                if (name.isNotEmpty() && email.isNotEmpty() && pass.isNotEmpty()) {
+                    adminViewModel.addUser(name, email, pass, role) { error ->
+                        if (error == null) {
+                            Toast.makeText(requireContext(), "$role added successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun buildUserList(view: View, recyclerId: Int, role: String): SimpleListAdapter<Person> {
         val recycler = view.findViewById<RecyclerView>(recyclerId)
         recycler.layoutManager = LinearLayoutManager(requireContext())
-        val adapter = SimpleListAdapter<Person>(R.layout.item_user_row) { row, person ->
-            val label = if (role == "DOCTOR") "Dr. ${person.name}" else person.name
-            row.findViewById<TextView>(R.id.textName).text = label
-            row.findViewById<TextView>(R.id.textEmail).text = person.email
-            row.findViewById<View>(R.id.btnRemove).setOnClickListener {
-                confirmRemove(person, role, label)
+        val adapter = SimpleListAdapter<Person>(R.layout.item_appointment) { row, person ->
+            row.findViewById<TextView>(R.id.textDate).text = person.name
+            row.findViewById<TextView>(R.id.textDoctor).text = person.email
+            row.findViewById<TextView>(R.id.textStatus).text = role
+            row.findViewById<TextView>(R.id.textStatus).setBackgroundResource(R.drawable.bg_badge)
+
+            row.setOnClickListener {
+                confirmRemove(person, role, if (role == "DOCTOR") "doctor" else "patient")
             }
         }
         recycler.adapter = adapter
         return adapter
     }
 
-    private fun confirmCancel(appointment: Appointment) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Cancel this appointment?")
-            .setMessage("${appointment.patientName} with Dr. ${appointment.doctorName} on ${appointment.date} at ${appointment.time}.")
-            .setNegativeButton("Keep", null)
-            .setPositiveButton("Cancel appointment") { _, _ ->
-                appointmentViewModel.cancelAppointment(appointment.id)
-                Toast.makeText(requireContext(), "Appointment cancelled", Toast.LENGTH_SHORT).show()
-            }
-            .show()
-    }
-
-    private fun confirmDelete(appointment: Appointment) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete this appointment?")
-            .setMessage("It will be removed permanently from the system.")
-            .setNegativeButton("Keep", null)
-            .setPositiveButton("Delete") { _, _ ->
-                appointmentViewModel.deleteAppointment(appointment.id)
-                Toast.makeText(requireContext(), "Appointment deleted", Toast.LENGTH_SHORT).show()
-            }
-            .show()
-    }
-
     private fun confirmRemove(person: Person, role: String, label: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("Remove $label?")
-            .setMessage(
-                "They will no longer be able to log in. " +
-                        "Appointments that mention them are kept."
-            )
+            .setMessage("Remove ${person.name} (${person.email})?")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Remove") { _, _ ->
                 adminViewModel.removeUser(person, role)
-                Toast.makeText(requireContext(), "$label removed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Removed successfully", Toast.LENGTH_SHORT).show()
             }
             .show()
-    }
-
-    private fun showAddDialog(role: String) {
-        val content = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_add_user, null)
-        val nameInput = content.findViewById<TextInputEditText>(R.id.inputName)
-        val emailInput = content.findViewById<TextInputEditText>(R.id.inputEmail)
-        val passwordInput = content.findViewById<TextInputEditText>(R.id.inputPassword)
-        val error = content.findViewById<TextView>(R.id.textDialogError)
-
-        val title = if (role == "DOCTOR") "Add doctor" else "Add patient"
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setView(content)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Add", null)
-            .create()
-        dialog.show()
-
-        // Set the click listener after show() so a validation error keeps the dialog open.
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-            val name = nameInput.text.toString().trim()
-            val email = emailInput.text.toString().trim()
-            val password = passwordInput.text.toString()
-
-            val problem = when {
-                name.isEmpty() || email.isEmpty() || password.isEmpty() ->
-                    "Please fill in every field"
-                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                    "Enter a valid email address"
-                password.length < 6 ->
-                    "The password needs at least 6 characters"
-                else -> null
-            }
-            if (problem != null) {
-                error.text = problem
-                error.visibility = View.VISIBLE
-                return@setOnClickListener
-            }
-
-            adminViewModel.addUser(name, email, password, role) { result ->
-                if (result == null) {
-                    dialog.dismiss()
-                    Toast.makeText(requireContext(), "$title: done", Toast.LENGTH_SHORT).show()
-                } else {
-                    error.text = result
-                    error.visibility = View.VISIBLE
-                }
-            }
-        }
     }
 }

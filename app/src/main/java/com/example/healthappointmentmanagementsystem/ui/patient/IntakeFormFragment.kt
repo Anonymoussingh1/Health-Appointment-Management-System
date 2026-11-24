@@ -7,9 +7,11 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.healthappointmentmanagementsystem.R
 import com.example.healthappointmentmanagementsystem.data.IntakeDirectory
 import com.example.healthappointmentmanagementsystem.ui.auth.AuthViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,19 +40,20 @@ class IntakeFormFragment : Fragment(R.layout.fragment_intake_form) {
             val patientName = patient?.name ?: "Anonymous Patient"
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
-            IntakeDirectory.save(
-                requireContext(),
-                IntakeDirectory.IntakeRecord(
-                    patientName = patientName,
-                    symptoms = symText,
-                    allergies = if (allText.isEmpty()) "None recorded" else allText,
-                    medications = if (medText.isEmpty()) "None recorded" else medText,
-                    date = currentDate
+            viewLifecycleOwner.lifecycleScope.launch {
+                IntakeDirectory.save(
+                    requireContext(),
+                    IntakeDirectory.IntakeRecord(
+                        patientName = patientName,
+                        symptoms = symText,
+                        allergies = if (allText.isEmpty()) "None recorded" else allText,
+                        medications = if (medText.isEmpty()) "None recorded" else medText,
+                        date = currentDate
+                    )
                 )
-            )
-
-            Toast.makeText(requireContext(), "Intake form submitted successfully! Doctor can now review it.", Toast.LENGTH_LONG).show()
-            parentFragmentManager.popBackStack()
+                Toast.makeText(requireContext(), "Intake form submitted successfully! Doctor can now review it.", Toast.LENGTH_LONG).show()
+                parentFragmentManager.popBackStack()
+            }
         }
     }
 }

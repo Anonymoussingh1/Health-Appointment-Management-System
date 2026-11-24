@@ -29,7 +29,7 @@ class DoctorPrescriptionsFragment : Fragment(R.layout.fragment_doctor_prescripti
         recyclerRequests.layoutManager = LinearLayoutManager(requireContext())
 
         val requests = PrescriptionDirectory.getRequests(requireContext())
-        val requestStrings = requests.map { "Refill Request: ${it.patientName} — ${it.medication} (${it.date})" }
+        val requestStrings = requests.map { "Refill Request: ${it.patientName.substringBefore("@").trim()} — ${it.medication} (${it.date})" }
 
         val requestAdapter = SimpleListAdapter<String>(R.layout.item_simple_row) { row, text ->
             row.findViewById<TextView>(R.id.textTitle).text = text
@@ -45,7 +45,7 @@ class DoctorPrescriptionsFragment : Fragment(R.layout.fragment_doctor_prescripti
             val names = if (patientList.isEmpty()) {
                 listOf("No registered patients found")
             } else {
-                patientList.map { "${it.name} (${it.email})" }
+                patientList.map { it.name.substringBefore("@").trim() }
             }
             val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, names)
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -68,7 +68,8 @@ class DoctorPrescriptionsFragment : Fragment(R.layout.fragment_doctor_prescripti
                 Toast.makeText(requireContext(), "Please enter prescription details.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            Toast.makeText(requireContext(), "E-Prescription issued successfully to ${patient.name}!", Toast.LENGTH_LONG).show()
+            val cleanName = patient.name.substringBefore("@").trim()
+            Toast.makeText(requireContext(), "E-Prescription issued successfully to $cleanName!", Toast.LENGTH_LONG).show()
             editRx.setText("")
         }
 
@@ -83,7 +84,8 @@ class DoctorPrescriptionsFragment : Fragment(R.layout.fragment_doctor_prescripti
                 return@setOnClickListener
             }
             val patient = patientList[selectedPosition]
-            Toast.makeText(requireContext(), "Lab tests & specialist referral ordered for ${patient.name}!", Toast.LENGTH_LONG).show()
+            val cleanName = patient.name.substringBefore("@").trim()
+            Toast.makeText(requireContext(), "Lab tests & specialist referral ordered for $cleanName!", Toast.LENGTH_LONG).show()
         }
     }
 }

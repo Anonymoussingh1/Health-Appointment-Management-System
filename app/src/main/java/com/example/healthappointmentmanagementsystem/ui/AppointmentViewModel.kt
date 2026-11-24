@@ -27,7 +27,8 @@ class AppointmentViewModel : ViewModel() {
     }
 
     init {
-        loadSampleAppointments()
+        // Start with empty appointments so patients start fresh and only see appointments they explicitly book.
+        _appointments.value = emptyList()
     }
 
     fun loadSampleAppointments() {
@@ -51,11 +52,15 @@ class AppointmentViewModel : ViewModel() {
         onResult(null)
     }
 
-    fun cancelAppointment(id: String) {
+    fun updateAppointmentStatus(id: String, status: String) {
         val currentList = _appointments.value.orEmpty().map {
-            if (it.id == id) it.copy(status = "Cancelled") else it
+            if (it.id == id) it.copy(status = status) else it
         }
         _appointments.value = currentList
+    }
+
+    fun cancelAppointment(id: String) {
+        updateAppointmentStatus(id, "Cancelled")
     }
 
     fun deleteAppointment(id: String) {

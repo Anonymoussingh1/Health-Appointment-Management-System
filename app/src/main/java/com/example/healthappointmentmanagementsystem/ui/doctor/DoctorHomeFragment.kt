@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.healthappointmentmanagementsystem.R
@@ -19,7 +18,7 @@ import com.example.healthappointmentmanagementsystem.ui.consultation.Consultatio
 
 class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
 
-    private val viewModel: AppointmentViewModel by viewModels()
+    private val viewModel: AppointmentViewModel by activityViewModels()
     private val authViewModel: AuthViewModel by activityViewModels()
 
     private var mineCache: List<String> = emptyList()
@@ -29,10 +28,11 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
 
         val user = authViewModel.currentUser.value
         val name = user?.name ?: "Doctor"
+        val cleanName = name.substringBefore("@").trim()
 
-        view.findViewById<TextView>(R.id.textWelcome).text = "Dr. $name"
+        view.findViewById<TextView>(R.id.textWelcome).text = "Dr. $cleanName"
         view.findViewById<TextView>(R.id.textProfile).text =
-            "Name: Dr. $name\nEmail: ${user?.email ?: "-"}\nRole: Doctor${if (!user?.specialty.isNullOrEmpty()) "\nSpecialty: ${user?.specialty}" else ""}${if (!user?.hospital.isNullOrEmpty()) "\nHospital: ${user?.hospital}" else ""}"
+            "Name: Dr. $cleanName\nEmail: ${user?.email ?: "-"}\nRole: Doctor${if (!user?.specialty.isNullOrEmpty()) "\nSpecialty: ${user?.specialty}" else ""}${if (!user?.hospital.isNullOrEmpty()) "\nHospital: ${user?.hospital}" else ""}"
 
         // Doctor Professional Tool Buttons
         view.findViewById<Button>(R.id.btnSchedule).setOnClickListener {
@@ -66,22 +66,53 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
 
         recycler.layoutManager = LinearLayoutManager(requireContext())
         val adapter = SimpleListAdapter<String>(R.layout.item_appointment) { row, text ->
-            row.findViewById<TextView>(R.id.textTitle).text = text
-            row.setOnClickListener { openConsultation(text) }
+            val dateView = row.findViewById<TextView>(R.id.textDate)
+            val docView = row.findViewById<TextView>(R.id.textDoctor)
+            val patientView = row.findViewById<TextView>(R.id.textPatient)
+            val statusView = row.findViewById<TextView>(R.id.textStatus)
+
+            try {
+                if (text.contains("|")) {
+                    dateView.text = text.substringBefore("|").trim()
+                    val rest = text.substringAfter("|").trim()
+                    docView.text = rest.substringBefore("-").trim()
+                    patientView.text = rest.substringAfter("-").trim()
+                } else {
+                    dateView.text = text
+                    docView.text = ""
+                    patientView.text = ""
+                }
+            } catch (_: Exception) {
+                dateView.text = text
+            }
+
+            if (text.contains("[Confirmed]", ignoreCase = true)) {
+                statusView.text = "CONFIRMED"
+            } else if (text.contains("[Pending]", ignoreCase = true)) {
+                statusView.text = "PENDING"
+            } else if (text.contains("[Cancelled]", ignoreCase = true)) {
+                statusView.text = "CANCELLED"
+            } else {
+                statusView.text = "SCHEDULED"
+            }
+
+            row.setOnClickListener {
+                showAppointmentActionDialog(text)
+            }
         }
         recycler.adapter = adapter
 
-        val key = "dr. ${name.trim().lowercase()}"
+        val key = cleanName.lowercase()
 
         viewModel.formattedAppointmentList.observe(viewLifecycleOwner) { all ->
-            val mine = all.filter { it.lowercase().contains(key) }
+            val mine = all.filter { it.lowercase().contains("dr. $key") || it.lowercase().contains(key) }
             mineCache = mine
 
             adapter.submit(mine)
             empty.visibility = if (mine.isEmpty()) View.VISIBLE else View.GONE
 
-            val confirmed = mine.count { it.contains("[Confirmed]") }
-            val pending = mine.count { it.contains("[Pending]") }
+            val confirmed = mine.count { it.contains("[Confirmed]", ignoreCase = true) }
+            val pending = mine.count { it.contains("[Pending]", ignoreCase = true) }
             summary.text = "Total Appointments: ${mine.size}  ·  Confirmed: $confirmed  ·  Pending: $pending"
         }
 
@@ -106,6 +137,37 @@ class DoctorHomeFragment : Fragment(R.layout.fragment_doctor_home) {
         view.findViewById<Button>(R.id.btnLogout).setOnClickListener {
             authViewModel.logout()
         }
+    }
+
+    private fun showAppointmentActionDialog(appointmentText: String) {
+        val options = arrayOf("Confirm / Approve Appointment", "Cancel Appointment", "Write Consultation Notes")
+        AlertDialog.Builder(requireContext())
+            .setTitle("Manage Patient Appointment")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        viewModel.appointments.value?.firstOrNull { appt ->
+                            appointmentText.contains(appt.date) && appointmentText.contains(appt.time) && appointmentText.contains(appt.patientName)
+                        }?.let { appt ->
+                            viewModel.updateAppointmentStatus(appt.id, "Confirmed")
+                            Toast.makeText(requireContext(), "Appointment confirmed & approved!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    1 -> {
+                        viewModel.appointments.value?.firstOrNull { appt ->
+                            appointmentText.contains(appt.date) && appointmentText.contains(appt.time) && appointmentText.contains(appt.patientName)
+                        }?.let { appt ->
+                            viewModel.cancelAppointment(appt.id)
+                            Toast.makeText(requireContext(), "Appointment cancelled", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    2 -> {
+                        openConsultation(appointmentText)
+                    }
+                }
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun openConsultation(appointmentText: String) {

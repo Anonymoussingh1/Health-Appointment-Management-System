@@ -55,6 +55,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _errorMessage.postValue("This email can't be used for registration")
                 return@launch
             }
+
+            // Password policy for Patients and Doctors: >= 8 chars, at least one uppercase letter, at least one special character.
+            if (role.equals("PATIENT", ignoreCase = true) || role.equals("DOCTOR", ignoreCase = true)) {
+                if (password.length < 8 || !password.any { it.isUpperCase() } || !password.any { !it.isLetterOrDigit() }) {
+                    _errorMessage.postValue("Password must be at least 8 characters, include an uppercase letter and a special character.")
+                    return@launch
+                }
+            }
+
             if (userDao.findByEmail(email) != null) {
                 _errorMessage.postValue("An account with this email already exists")
                 return@launch

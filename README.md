@@ -1,6 +1,6 @@
 # Health Appointment Management System
 
-An Android application developed in Kotlin using modern Android architecture, designed to digitize and streamline healthcare scheduling, patient intake, consultations, and clinic management.
+An Android application developed in Kotlin using modern Android architecture, designed to digitize and streamline healthcare scheduling, patient intake, clinical consultations, e-prescriptions, and clinic administration.
 
 ## Problem Statement
 Traditional healthcare appointment systems (manual phone calls, physical booking desks, and paper-based record-keeping) suffer from significant inefficiencies:
@@ -11,45 +11,47 @@ Traditional healthcare appointment systems (manual phone calls, physical booking
 
 ## Proposed Solution
 Our mobile application provides a centralized digital **Health Appointment Management System** designed to streamline the entire healthcare booking lifecycle:
-- **Digital Booking:** Patients can browse doctors by specialty, check availability, and book consultations instantly.
-- **Appointment Management:** Real-time tracking of upcoming, completed, and cancelled appointments.
-- **Secure Persistence:** Reliable local data storage via SQLite database operations.
-- **Organized Records:** Easy access to medical history, consultation details, and pre-visit intake forms.
+- **Digital Booking:** Patients browse doctors by specialty, check availability, and book consultations instantly.
+- **Appointment Management:** Real-time tracking, doctor approval/confirmation, rescheduling, and cancellation of appointments.
+- **Secure Persistence:** Reliable local database storage ensuring zero data loss across app restarts.
+- **Organized Records:** Easy access to medical history, pre-visit intake forms, and e-prescriptions.
 
 ## Key Features & Modules
 
-### 1. Authentication & Role Management
-- Secure Login & Registration with role selection (Patient vs. Doctor).
+### 1. Authentication & Security
+- Secure Login & Registration with role selection (Patient vs. Doctor vs. Admin).
+- **Strict Password Policy:** Patient and doctor passwords require at least 8 characters, an uppercase letter, and a special character.
 - Show/Hide password toggle on all password fields.
 - Forgot Password / Password Reset link simulation for both patients and doctors.
-- Doctor-specific profile setup: Hospital / Clinic selection and Profession / Specialty (e.g., Back Doctor, Eye, Cardiologist).
+- Doctor-specific profile setup: Hospital/Clinic selection and clinical specialty (e.g., Back Doctor, Eye, Cardiologist).
 
 ### 2. Patient Portal
 - **Dashboard:** Overview of active appointments, status counters, and quick service shortcuts.
 - **Appointment Booking:** Select registered doctors by specialty, pick available dates/times, and state reasons for visits.
-- **Digital Intake Forms:** Complete pre-visit health questionnaires (symptoms, allergies, medications) sent directly to the doctor's review history.
+- **Digital Intake Forms:** Complete pre-visit health questionnaires (symptoms, allergies, medications) saved permanently to the database for doctor review.
 - **Prescriptions & Refill Requests:** View active prescriptions and send refill requests directly to the treating doctor.
-- **Billing & Copays:** Track consultation copays and process payments.
+- **Billing & Copays:** Track consultation copays and process payments ($25.00 copay balance).
 - **Care Messages:** Secure direct messaging with the clinic and care team.
-- **Family & Dependents:** Manage linked family member profiles.
+- **Family & Dependents:** Manage linked family member profiles (add/view dependents).
 - **Insurance & Info:** View and update health insurance details.
 
 ### 3. Doctor Portal
 - **Dashboard:** Overview of assigned patient appointments with status breakdowns.
+- **Appointment Approval:** Doctors can tap any appointment card to **Confirm / Approve** or **Cancel** patient appointment requests in real-time.
 - **Schedule & Shifts:** Manage working hours and block time off / vacations.
 - **Waiting Room:** Real-time patient check-ins and appointment requests.
-- **Patient Medical History:** Review patient profiles, chief complaints, and submitted intake questionnaires.
-- **E-Prescriptions & Lab Orders:** Select patient recipients from a dynamic dropdown menu and issue e-prescriptions or lab test orders.
+- **Patient Medical History:** Review patient profiles, chief complaints, and submitted intake questionnaires filtered exclusively by patients who booked with the logged-in doctor.
+- **E-Prescriptions & Lab Orders:** Select patient recipients from a clean dynamic dropdown menu and issue e-prescriptions or lab test orders.
 - **Incoming Refill Requests:** Real-time notification list of prescription refill requests submitted by patients.
 
 ### 4. Admin Portal
 - Admin Dashboard for centralized management.
 - Add and remove Doctors and Patients.
 - Search across all registered users.
-- View and manage all system appointments (cancel or delete).
+- **Appointment Administration:** View all clinic appointments and manage them (delete or cancel).
 
 ## Architecture
-- **UI Layer (`ui/`):** Activities, Fragments, and ViewModels managing views and business logic.
+- **UI Layer (`ui/`):** Activities, Fragments, and ViewModels managing views and business logic via shared activity scopes.
 - **Data Layer (`data/`):** Repositories, Directory helpers, and SQLite database storage.
 
 ## Team

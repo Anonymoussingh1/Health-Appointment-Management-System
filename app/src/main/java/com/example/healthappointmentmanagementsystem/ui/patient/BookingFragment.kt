@@ -11,7 +11,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.healthappointmentmanagementsystem.R
 import com.example.healthappointmentmanagementsystem.data.Appointment
@@ -24,7 +23,7 @@ import java.util.UUID
 
 class BookingFragment : Fragment(R.layout.fragment_booking) {
 
-    private val appointmentViewModel: AppointmentViewModel by viewModels()
+    private val appointmentViewModel: AppointmentViewModel by activityViewModels()
     private val authViewModel: AuthViewModel by activityViewModels()
 
     private val timeSlots = listOf(
